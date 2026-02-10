@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch-2.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:batch.properties" />
+	</bean>
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="${batch.jdbc.driver}" />
+		<property name="url" value="${batch.jdbc.url}" />
+		<property name="username" value="${batch.jdbc.user}" />
+		<property name="password" value="${batch.jdbc.password}" />
+	</bean>
+
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<batch:job-repository id="jobRepository" data-source="dataSource" transaction-manager="transactionManager" />
+
+	<bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+	</bean>
+
+	<batch:job id="jobBancomerAPX">
+		<batch:step id="step1">
+			<batch:tasklet>
+				<batch:chunk reader="customerReader" 
+							 processor="customerProcessor" 
+							 writer="fileWriter" 
+							 commit-interval="1" />
+			</batch:tasklet>
+			<batch:next on="COMPLETED" to="stepComplete" />
+			<batch:next on="FAILED" to="stepFailed" />
+		</batch:step>
+
+		<batch:step id="stepComplete">
+			<batch:tasklet ref="taskletComplete" />
+		</batch:step>
+
+		<batch:step id="stepFailed">
+			<batch:tasklet ref="taskletFailed" />
+		</batch:step>
+	</batch:job>
+
+	<bean id="gestionClientes" class="com.apress.springbatch.chapter2.lib.imp.GestionClientesImpl">
+		<property name="jdbcTemplate" ref="jdbcTemplate" />
+	</bean>
+
+	<bean id="customerReader" class="com.apress.springbatch.chapter2.Reader" scope="step">
+		<property name="gestionClientes" ref="gestionClientes" />
+		<property name="odate" value="#{jobParameters['odate']}" />
+	</bean>
+
+	<bean id="customerProcessor" class="com.apress.springbatch.chapter2.Process" scope="step">
+		<property name="gestionClientes" ref="gestionClientes" />
+		<property name="odate" value="#{jobParameters['odate']}" />
+	</bean>
+
+	<bean id="fileWriter" class="org.springframework.batch.item.file.FlatFileItemWriter" scope="step">
+		<property name="resource" value="file:C:/Users/JimzL/Desktop/REPORTE_CLIENTES_#{jobParameters['odate']}.txt" />
+		<property name="lineAggregator">
+			<bean class="org.springframework.batch.item.file.transform.PassThroughLineAggregator" />
+		</property>
+	</bean>
+
+	<bean id="taskletComplete" class="com.apress.springbatch.chapter2.Complete">
+		<property name="gestionClientes" ref="gestionClientes" />
+	</bean>
+
+	<bean id="taskletFailed" class="com.apress.springbatch.chapter2.Failed">
+		<property name="gestionClientes" ref="gestionClientes" />
+	</bean>
+
+</beans>

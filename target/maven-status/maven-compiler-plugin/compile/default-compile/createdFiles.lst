@@ -1,0 +1,9 @@
+com\apress\springbatch\chapter2\lib\GestionClientes.class
+com\apress\springbatch\chapter2\lib\imp\GestionClientesAbstract.class
+com\apress\springbatch\chapter2\Failed.class
+com\apress\springbatch\chapter2\Complete.class
+com\apress\springbatch\chapter2\lib\imp\GestionClientesImpl.class
+com\apress\springbatch\chapter2\Reader.class
+com\apress\springbatch\chapter2\Process.class
+com\apress\springbatch\chapter2\dto\ClienteDTO.class
+com\apress\springbatch\chapter2\batch\util\Utility.class
