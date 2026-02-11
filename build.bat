@@ -2,11 +2,11 @@
 setlocal enabledelayedexpansion
 
 echo ====================================================
-echo       SISTEMA DE CONSTRUCCION + SONARQUBE PRO
+echo        SISTEMA DE CONSTRUCCION + SONARQUBE PRO
 echo ====================================================
 
 :: 1. CONFIGURACION DE RUTAS (JAVA 25)
-:: Forzamos a que el sistema use tu version mas reciente para evitar errores de compatibilidad
+:: Forzamos a que el sistema use tu version mas reciente
 set "JAVA_HOME=C:\Program Files\Java\jdk-25.0.2"
 set "PATH=!JAVA_HOME!\bin;!PATH!"
 
@@ -41,12 +41,12 @@ taskkill /f /im mvn.exe /t >nul 2>&1
 echo [*] Iniciando compilacion y analisis en SonarQube...
 echo ----------------------------------------------------
 
-:: Ejecutamos todo usando el token y la URL local
+:: Usamos el NUEVO token squ_ y el parametro recomendado -Dsonar.token
 call mvn clean install sonar:sonar ^
   -Dsonar.projectKey=Mi-Primer-Proyecto-Java ^
   -Dsonar.projectName="Proyecto Java Jonathan" ^
   -Dsonar.host.url=http://localhost:9000 ^
-  -Dsonar.login=118b78b350cf99def26ce78561858e5678 ^
+  -Dsonar.token=squ_97714e005d00f6aee631b5df24c8624ac09d470c ^
   -DskipTests=false
 
 set MAVEN_RESULT=!errorlevel!
