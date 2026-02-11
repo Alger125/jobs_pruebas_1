@@ -13,43 +13,38 @@ if not exist "pom.xml" (
 )
 echo [OK] pom.xml detectado.
 
-:: 2. VALIDAR JAVA_HOME
-echo [*] Verificando entorno Java...
-if "%JAVA_HOME%"=="" (
-    echo [WARN] JAVA_HOME no esta definida. Buscando 'java' en PATH...
-) else (
-    echo [OK] JAVA_HOME detectado en: "%JAVA_HOME%"
-)
+:: 2. VALIDAR ENTORNO (JAVA y MAVEN)
+echo [*] Verificando herramientas...
 
+:: Verificamos Java sin bloquearnos en el IF
 java -version >nul 2>&1
 if !errorlevel! neq 0 (
-    echo [ERROR] Java no es accesible. Verifica la instalacion.
+    echo [ERROR] Java no es accesible.
     exit /b 1
 )
 
-:: 3. VALIDAR MAVEN (Sin usar 'where' para evitar errores de sintaxis)
-echo [*] Verificando Maven...
+:: Verificamos Maven sin usar 'where'
 call mvn -version >nul 2>&1
 if !errorlevel! neq 0 (
     echo [ERROR] El comando 'mvn' no funciona. 
-    echo Asegurate de que la carpeta 'bin' de Maven este en el PATH de Windows.
+    echo Asegurate de que la carpeta 'bin' de Maven este en el PATH.
     exit /b 1
 )
-echo [OK] Maven esta listo para usar.
+echo [OK] Herramientas listas.
 
-:: 4. LIMPIEZA PREVIA (Opcional)
-echo [*] Limpiando procesos de Java previos para evitar bloqueos...
-taskkill /f /im java.exe /t >nul 2>&1
-:: No validamos errorlevel aqui porque si no hay procesos, dara error y es normal.
+:: 3. LIMPIEZA SEGURA
+:: Solo matamos procesos de Maven colgados, NUNCA java.exe porque matamos a Jenkins
+echo [*] Limpiando procesos de compilacion previos...
+taskkill /f /im mvn.exe /t >nul 2>&1
 
-:: 5. EJECUCION DE MAVEN
+:: 4. EJECUCION DE MAVEN
 echo [*] Iniciando compilacion: mvn clean install...
 echo ----------------------------------------------------
 call mvn clean install -DskipTests=false
 set MAVEN_RESULT=!errorlevel!
 echo ----------------------------------------------------
 
-:: 6. RESULTADO FINAL
+:: 5. RESULTADO FINAL
 if !MAVEN_RESULT! equ 0 (
     echo.
     echo ====================================================
@@ -61,7 +56,7 @@ if !MAVEN_RESULT! equ 0 (
     echo.
     echo ====================================================
     echo [FAILURE] ERROR EN LA COMPILACION DE MAVEN
-    echo Revisa los errores arriba. Codigo de salida: !MAVEN_RESULT!
+    echo Codigo de salida: !MAVEN_RESULT!
     echo ====================================================
     exit /b 1
 )
