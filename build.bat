@@ -2,10 +2,15 @@
 setlocal enabledelayedexpansion
 
 echo ====================================================
-echo       SISTEMA DE CONSTRUCCION + SONARQUBE
+echo       SISTEMA DE CONSTRUCCION + SONARQUBE PRO
 echo ====================================================
 
-:: 1. VALIDAR ARCHIVOS DEL PROYECTO
+:: 1. CONFIGURACION DE RUTAS (JAVA 25)
+:: Forzamos a que el sistema use tu version mas reciente para evitar errores de compatibilidad
+set "JAVA_HOME=C:\Program Files\Java\jdk-25.0.2"
+set "PATH=!JAVA_HOME!\bin;!PATH!"
+
+:: 2. VALIDAR ARCHIVOS DEL PROYECTO
 echo [*] Validando estructura del proyecto...
 if not exist "pom.xml" (
     echo [ERROR] No se encontro el archivo pom.xml en: "%cd%"
@@ -13,30 +18,30 @@ if not exist "pom.xml" (
 )
 echo [OK] pom.xml detectado.
 
-:: 2. VALIDAR ENTORNO
+:: 3. VALIDAR ENTORNO
 echo [*] Verificando herramientas...
 java -version >nul 2>&1
 if !errorlevel! neq 0 (
-    echo [ERROR] Java no es accesible.
+    echo [ERROR] Java 25 no es accesible en la ruta especificada.
     exit /b 1
 )
 
 call mvn -version >nul 2>&1
 if !errorlevel! neq 0 (
-    echo [ERROR] El comando 'mvn' no funciona. Verifique el PATH.
+    echo [ERROR] El comando 'mvn' no funciona. Verifique que Maven este en el PATH.
     exit /b 1
 )
-echo [OK] Herramientas listas.
+echo [OK] Java 25 y Maven listos.
 
-:: 3. LIMPIEZA SEGURA
+:: 4. LIMPIEZA SEGURA
 echo [*] Limpiando procesos de Maven previos...
 taskkill /f /im mvn.exe /t >nul 2>&1
 
-:: 4. EJECUCION DE MAVEN + ANALISIS SONARQUBE
+:: 5. EJECUCION DE MAVEN + ANALISIS SONARQUBE
 echo [*] Iniciando compilacion y analisis en SonarQube...
 echo ----------------------------------------------------
 
-:: Ejecutamos la compilacion y enviamos a Sonar en un solo paso
+:: Ejecutamos todo usando el token y la URL local
 call mvn clean install sonar:sonar ^
   -Dsonar.projectKey=Mi-Primer-Proyecto-Java ^
   -Dsonar.projectName="Proyecto Java Jonathan" ^
@@ -47,7 +52,7 @@ call mvn clean install sonar:sonar ^
 set MAVEN_RESULT=!errorlevel!
 echo ----------------------------------------------------
 
-:: 5. RESULTADO FINAL
+:: 6. RESULTADO FINAL
 if !MAVEN_RESULT! equ 0 (
     echo.
     echo ====================================================
@@ -59,7 +64,8 @@ if !MAVEN_RESULT! equ 0 (
 ) else (
     echo.
     echo ====================================================
-    echo [FAILURE] ERROR EN LA COMPILACION O SONAR
+    echo [FAILURE] ERROR EN LA COMPILACION O EN SONAR
+    echo Revisa que el servidor de SonarQube este ENCENDIDO.
     echo Codigo de salida: !MAVEN_RESULT!
     echo ====================================================
     exit /b 1
